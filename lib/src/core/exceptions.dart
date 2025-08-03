@@ -3,9 +3,9 @@
 /// This serves as the parent class for all custom exceptions thrown
 /// by the AI WebScraper package.
 abstract class AIWebScraperException implements Exception {
-
   /// Creates a new AI WebScraper exception.
   const AIWebScraperException(this.message, [this.context]);
+
   /// The error message describing what went wrong.
   final String message;
 
@@ -35,9 +35,9 @@ class SchemaValidationException extends AIWebScraperException {
 /// This exception is thrown when the provided URL is invalid,
 /// malformed, or uses an unsupported protocol.
 class URLValidationException extends AIWebScraperException {
-
   /// Creates a new URL validation exception.
   const URLValidationException(super.message, this.url, [super.context]);
+
   /// The invalid URL that caused the exception.
   final String url;
 
@@ -53,7 +53,6 @@ class URLValidationException extends AIWebScraperException {
 /// This exception is thrown when the web scraping operation fails
 /// due to network issues, timeout, or other HTTP-related problems.
 class ScrapingException extends AIWebScraperException {
-
   /// Creates a new scraping exception.
   const ScrapingException(
     super.message,
@@ -61,6 +60,7 @@ class ScrapingException extends AIWebScraperException {
     this.statusCode,
     super.context,
   ]);
+
   /// The URL that failed to be scraped.
   final String url;
 
@@ -70,7 +70,8 @@ class ScrapingException extends AIWebScraperException {
   @override
   String toString() {
     final String baseString = super.toString();
-    final String statusInfo = statusCode != null ? ' (Status: $statusCode)' : '';
+    final String statusInfo =
+        statusCode != null ? ' (Status: $statusCode)' : '';
     return '$baseString\nFailed URL: $url$statusInfo';
   }
 }
@@ -80,7 +81,6 @@ class ScrapingException extends AIWebScraperException {
 /// This exception is thrown when the AI provider API call fails
 /// due to authentication, rate limiting, or service unavailability.
 class AIProviderException extends AIWebScraperException {
-
   /// Creates a new AI provider exception.
   const AIProviderException(
     super.message,
@@ -88,6 +88,7 @@ class AIProviderException extends AIWebScraperException {
     this.statusCode,
     super.context,
   ]);
+
   /// The AI provider that caused the exception.
   final String provider;
 
@@ -97,7 +98,8 @@ class AIProviderException extends AIWebScraperException {
   @override
   String toString() {
     final String baseString = super.toString();
-    final String statusInfo = statusCode != null ? ' (Status: $statusCode)' : '';
+    final String statusInfo =
+        statusCode != null ? ' (Status: $statusCode)' : '';
     return '$baseString\nProvider: $provider$statusInfo';
   }
 }
@@ -107,9 +109,9 @@ class AIProviderException extends AIWebScraperException {
 /// This exception is thrown when the AI provider returns data
 /// that cannot be parsed as valid JSON or doesn't match the expected format.
 class ParsingException extends AIWebScraperException {
-
   /// Creates a new parsing exception.
   const ParsingException(super.message, this.rawData, [super.context]);
+
   /// The raw data that failed to parse.
   final String rawData;
 
@@ -127,7 +129,6 @@ class ParsingException extends AIWebScraperException {
 /// This exception is thrown when an operation exceeds the configured
 /// timeout duration.
 class TimeoutException extends AIWebScraperException {
-
   /// Creates a new timeout exception.
   const TimeoutException(
     super.message,
@@ -135,6 +136,7 @@ class TimeoutException extends AIWebScraperException {
     this.operation, [
     super.context,
   ]);
+
   /// The timeout duration that was exceeded.
   final Duration timeout;
 
@@ -153,7 +155,6 @@ class TimeoutException extends AIWebScraperException {
 /// This exception is thrown when batch processing encounters
 /// critical errors that prevent further processing.
 class BatchProcessingException extends AIWebScraperException {
-
   /// Creates a new batch processing exception.
   const BatchProcessingException(
     super.message,
@@ -161,6 +162,7 @@ class BatchProcessingException extends AIWebScraperException {
     this.totalCount, [
     super.context,
   ]);
+
   /// The number of URLs that were successfully processed.
   final int successCount;
 
@@ -179,9 +181,9 @@ class BatchProcessingException extends AIWebScraperException {
 /// This exception is thrown when Puppeteer or JavaScript rendering
 /// encounters errors during dynamic content loading.
 class JavaScriptScrapingException extends AIWebScraperException {
-
   /// Creates a new JavaScript scraping exception.
   const JavaScriptScrapingException(super.message, this.url, [super.context]);
+
   /// The URL that failed JavaScript scraping.
   final String url;
 

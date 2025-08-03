@@ -201,7 +201,7 @@ class GeminiClient extends AIClientBase {
         if (jsonMatch != null) {
           try {
             return jsonDecode(jsonMatch.group(0)!) as Map<String, dynamic>;
-          // ignore: avoid_catches_without_on_clauses
+            // ignore: avoid_catches_without_on_clauses
           } catch (e) {
             // Still failed, throw parsing exception
           }

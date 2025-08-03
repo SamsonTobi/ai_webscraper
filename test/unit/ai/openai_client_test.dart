@@ -145,7 +145,8 @@ void main() {
       });
 
       test('should reject too short API key', () {
-        final OpenAIClient client = OpenAIClient(apiKey: 'sk-short', model: 'gpt-3.5-turbo');
+        final OpenAIClient client =
+            OpenAIClient(apiKey: 'sk-short', model: 'gpt-3.5-turbo');
 
         expect(client.validateApiKey(), isFalse);
       });
@@ -172,7 +173,8 @@ void main() {
 
     group('HTTP Request Building Tests', () {
       test('should build correct request headers', () async {
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -204,7 +206,8 @@ void main() {
       });
 
       test('should build correct request body', () async {
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -226,11 +229,13 @@ void main() {
         );
 
         final http.Request request = mockHttpClient.requests.first;
-        final Map<String, dynamic> bodyData = jsonDecode(request.body) as Map<String, dynamic>;
+        final Map<String, dynamic> bodyData =
+            jsonDecode(request.body) as Map<String, dynamic>;
 
         expect(bodyData['model'], equals('gpt-3.5-turbo'));
         expect(bodyData['messages'], isA<List<dynamic>>());
-        expect(bodyData['response_format'], equals(<String, String>{'type': 'json_object'}));
+        expect(bodyData['response_format'],
+            equals(<String, String>{'type': 'json_object'}));
         expect(bodyData['temperature'], equals(0.1));
         expect(bodyData['max_tokens'], equals(1000));
       });
@@ -242,7 +247,8 @@ void main() {
           model: 'gpt-4',
         );
 
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -271,7 +277,8 @@ void main() {
         );
 
         final http.Request request = mockHttpClient.requests.first;
-        final Map<String, dynamic> bodyData = jsonDecode(request.body) as Map<String, dynamic>;
+        final Map<String, dynamic> bodyData =
+            jsonDecode(request.body) as Map<String, dynamic>;
 
         expect(bodyData['model'], equals('gpt-4'));
         expect(bodyData['temperature'], equals(0.7));
@@ -290,7 +297,8 @@ void main() {
           'description': 'A great product for testing',
         };
 
-        final Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        final Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -320,9 +328,12 @@ void main() {
       });
 
       test('should handle response with multiple choices', () async {
-        final Map<String, String> expectedData = <String, String>{'title': 'First Choice'};
+        final Map<String, String> expectedData = <String, String>{
+          'title': 'First Choice'
+        };
 
-        final Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        final Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -353,7 +364,9 @@ void main() {
 
       test('should throw AIClientException for empty choices', () async {
         // ignore: strict_raw_type
-        final Map<String, List> mockResponseData = <String, List>{'choices': <dynamic>[]};
+        final Map<String, List> mockResponseData = <String, List>{
+          'choices': <dynamic>[]
+        };
 
         mockHttpClient.addResponse(http.Response(
           jsonEncode(mockResponseData),
@@ -375,7 +388,8 @@ void main() {
       });
 
       test('should throw AIClientException for missing message', () async {
-        const Map<String, List<Map<String, String>>> mockResponseData = <String, List<Map<String, String>>>{
+        const Map<String, List<Map<String, String>>> mockResponseData =
+            <String, List<Map<String, String>>>{
           'choices': <Map<String, String>>[
             <String, String>{'invalid': 'structure'},
           ],
@@ -401,7 +415,8 @@ void main() {
       });
 
       test('should throw ParsingException for invalid JSON content', () async {
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -431,7 +446,8 @@ void main() {
       });
 
       test('should throw AIClientException for empty content', () async {
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -463,7 +479,8 @@ void main() {
 
     group('HTTP Status Code Handling Tests', () {
       test('should throw AIClientException for 401 Unauthorized', () async {
-        const Map<String, Map<String, String>> errorResponse = <String, Map<String, String>>{
+        const Map<String, Map<String, String>> errorResponse =
+            <String, Map<String, String>>{
           'error': <String, String>{
             'message': 'Invalid authentication credentials',
             'type': 'invalid_request_error',
@@ -482,14 +499,16 @@ void main() {
             schema: <String, String>{'title': 'string'},
           ),
           throwsA(isA<AIClientException>()
-              .having((AIClientException e) => e.statusCode, 'statusCode', equals(401))
+              .having((AIClientException e) => e.statusCode, 'statusCode',
+                  equals(401))
               .having((AIClientException e) => e.message, 'message',
                   contains('Authentication failed'))),
         );
       });
 
       test('should throw AIClientException for 403 Forbidden', () async {
-        const Map<String, Map<String, String>> errorResponse = <String, Map<String, String>>{
+        const Map<String, Map<String, String>> errorResponse =
+            <String, Map<String, String>>{
           'error': <String, String>{
             'message': 'Insufficient permissions',
             'type': 'invalid_request_error',
@@ -508,14 +527,16 @@ void main() {
             schema: <String, String>{'title': 'string'},
           ),
           throwsA(isA<AIClientException>()
-              .having((AIClientException e) => e.statusCode, 'statusCode', equals(403))
-              .having(
-                  (AIClientException e) => e.message, 'message', contains('Access forbidden'))),
+              .having((AIClientException e) => e.statusCode, 'statusCode',
+                  equals(403))
+              .having((AIClientException e) => e.message, 'message',
+                  contains('Access forbidden'))),
         );
       });
 
       test('should throw AIClientException for 429 Rate Limit', () async {
-        const Map<String, Map<String, String>> errorResponse = <String, Map<String, String>>{
+        const Map<String, Map<String, String>> errorResponse =
+            <String, Map<String, String>>{
           'error': <String, String>{
             'message': 'Rate limit exceeded',
             'type': 'rate_limit_error',
@@ -534,14 +555,16 @@ void main() {
             schema: <String, String>{'title': 'string'},
           ),
           throwsA(isA<AIClientException>()
-              .having((AIClientException e) => e.statusCode, 'statusCode', equals(429))
+              .having((AIClientException e) => e.statusCode, 'statusCode',
+                  equals(429))
               .having((AIClientException e) => e.message, 'message',
                   contains('Rate limit exceeded'))),
         );
       });
 
       test('should throw AIClientException for 500 Server Error', () async {
-        const Map<String, Map<String, String>> errorResponse = <String, Map<String, String>>{
+        const Map<String, Map<String, String>> errorResponse =
+            <String, Map<String, String>>{
           'error': <String, String>{
             'message': 'Internal Server Error',
             'type': 'server_error',
@@ -560,14 +583,16 @@ void main() {
             schema: <String, String>{'title': 'string'},
           ),
           throwsA(isA<AIClientException>()
-              .having((AIClientException e) => e.statusCode, 'statusCode', equals(500))
+              .having((AIClientException e) => e.statusCode, 'statusCode',
+                  equals(500))
               .having((AIClientException e) => e.message, 'message',
                   contains('OpenAI service unavailable'))),
         );
       });
 
       test('should throw AIClientException for unknown status codes', () async {
-        const Map<String, Map<String, String>> errorResponse = <String, Map<String, String>>{
+        const Map<String, Map<String, String>> errorResponse =
+            <String, Map<String, String>>{
           'error': <String, String>{
             'message': 'Unknown error occurred',
             'type': 'unknown_error',
@@ -586,7 +611,8 @@ void main() {
             schema: <String, String>{'title': 'string'},
           ),
           throwsA(isA<AIClientException>()
-              .having((AIClientException e) => e.statusCode, 'statusCode', equals(418))
+              .having((AIClientException e) => e.statusCode, 'statusCode',
+                  equals(418))
               .having((AIClientException e) => e.message, 'message',
                   contains('OpenAI API error (418)'))),
         );
@@ -659,7 +685,8 @@ void main() {
           'tags': 'array',
         };
 
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -694,7 +721,8 @@ void main() {
         const String normalContent =
             '<html><body><h1>Normal sized content</h1></body></html>';
 
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -726,7 +754,8 @@ void main() {
 
     group('Custom Instructions Tests', () {
       test('should handle custom instructions in options', () async {
-        const Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        const Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{
@@ -751,7 +780,8 @@ void main() {
         );
 
         final http.Request request = mockHttpClient.requests.first;
-        final Map<String, dynamic> bodyData = jsonDecode(request.body) as Map<String, dynamic>;
+        final Map<String, dynamic> bodyData =
+            jsonDecode(request.body) as Map<String, dynamic>;
         // ignore: strict_raw_type, always_specify_types
         final List messages = bodyData['messages'] as List<dynamic>;
 
@@ -769,7 +799,7 @@ void main() {
           model: 'gpt-3.5-turbo',
           httpClient: mockHttpClient,
         );
-        
+
         // ignore: unnecessary_lambdas
         expect(() => client.dispose(), returnsNormally);
       });
@@ -779,9 +809,7 @@ void main() {
           apiKey: 'sk-test-key-123456789',
           model: 'gpt-3.5-turbo',
           httpClient: mockHttpClient,
-        )
-
-        ..dispose();
+        )..dispose();
         // ignore: unnecessary_lambdas
         expect(() => client.dispose(), returnsNormally);
       });
@@ -813,7 +841,8 @@ void main() {
           'inStock': true,
         };
 
-        final Map<String, List<Map<String, Map<String, String>>>> mockResponseData = <String, List<Map<String, Map<String, String>>>>{
+        final Map<String, List<Map<String, Map<String, String>>>>
+            mockResponseData = <String, List<Map<String, Map<String, String>>>>{
           'choices': <Map<String, Map<String, String>>>[
             <String, Map<String, String>>{
               'message': <String, String>{

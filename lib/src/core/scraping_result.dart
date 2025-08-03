@@ -6,7 +6,6 @@ import 'ai_provider.dart';
 /// including whether it was successful, the extracted data, any errors,
 /// and metadata about the operation.
 class ScrapingResult {
-
   /// Creates a new scraping result.
   ///
   /// [success] indicates whether the operation was successful.
@@ -82,6 +81,7 @@ class ScrapingResult {
       timestamp: timestamp,
     );
   }
+
   /// Whether the scraping operation was successful.
   final bool success;
 
