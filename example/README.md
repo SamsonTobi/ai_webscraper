@@ -94,10 +94,10 @@ You can customize the data extraction by modifying the `eventSchema` in the exam
 
 ```dart
 final customSchema = {
-  'eventName': 'string - The name of the event',
-  'speakers': 'array - List of speakers or performers',
-  'categories': 'array - Event categories or tags',
-  'capacity': 'number - Maximum number of attendees',
+  'eventName': 'string',
+  'speakers': 'array',
+  'categories': 'array',
+  'capacity': 'number',
   // Add more fields as needed
 };
 ```
@@ -110,7 +110,7 @@ Enhance extraction accuracy with specific prompts:
 final result = await scraper.extractFromUrl(
   url: url,
   schema: eventSchema,
-  prompt: '''
+  customInstructions: '''
   Focus on extracting information for a music concert:
   - Look for artist/band names
   - Find venue capacity and seating information

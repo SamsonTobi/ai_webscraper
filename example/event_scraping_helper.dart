@@ -27,16 +27,7 @@ class EventScrapingHelper {
 
   /// Standard event data schema used across examples - returns array of events
   static Map<String, String> get eventSchema => {
-        'events': 'array of objects with the following structure: {'
-            '"title": "string - The main title or name of the event", '
-            '"description": "text - A brief description or summary of the event", '
-            '"ticketLink": "url - Complete URL where people can buy tickets or register", '
-            '"date": "string - The date when the event takes place", '
-            '"time": "string - The time when the event starts", '
-            '"venue": "string - The location or venue where the event takes place", '
-            '"price": "string - Ticket price or cost information", '
-            '"organizer": "string - Event organizer or host information"'
-            '}',
+        'events': 'array',
       };
 
   /// Alternative single event schema for pages with only one event
@@ -169,7 +160,7 @@ Important instructions:
       apiKey: apiKey,
       timeout: const Duration(seconds: 45),
       useJavaScript:
-          true, // Use JavaScript scraping for better content extraction
+          false, // Use JavaScript scraping for better content extraction
     );
 
     Logger.info('AI WebScraper initialized with Gemini 1.5 Pro');
@@ -180,7 +171,7 @@ Important instructions:
   static Future<ScrapingResult> extractEventData(
     AIWebScraper scraper,
     String url, {
-    bool extractMultiple = true,
+    bool extractMultiple = false,
   }) async {
     Logger.info('Starting extraction for URL: $url');
     Logger.info(

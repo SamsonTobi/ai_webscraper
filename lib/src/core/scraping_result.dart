@@ -183,6 +183,28 @@ class ScrapingResult {
     };
   }
 
+  /// Converts the result to a detailed JSON map with additional metadata.
+  ///
+  /// This includes more comprehensive information suitable for API responses.
+  Map<String, dynamic> toDetailedJson() {
+    return <String, dynamic>{
+      'success': success,
+      'data': data,
+      'error': error,
+      'metadata': <String, dynamic>{
+        'scrapingTimeMs': scrapingTime.inMilliseconds,
+        'aiProvider': aiProvider.displayName,
+        'providerCode': aiProvider.name,
+        'url': url,
+        'timestamp': timestamp.toIso8601String(),
+        'fieldCount': fieldCount,
+        'fieldNames': fieldNames,
+        'hasData': hasData,
+        'hasError': hasError,
+      },
+    };
+  }
+
   @override
   String toString() {
     if (success) {

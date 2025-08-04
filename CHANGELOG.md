@@ -15,6 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Create middleware system for request/response processing
 - Add support for proxy configurations
 
+## [0.1.1] - 2025-08-04
+
+### Fixed
+
+- Fixed schema validation issue with complex array schema definitions
+- Improved `ScrapingResult` JSON serialization for better API integration
+- Fixed empty response handling in Gemini client
+
+### Enhanced
+
+- Better documentation for custom prompts feature
+- Improved error messages for schema validation
+- Enhanced examples with custom prompt usage
+
 ## [0.1.0] - 2025-08-01
 
 ### Added

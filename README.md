@@ -116,6 +116,61 @@ final result = await scraper.extractFromUrl(
 );
 ```
 
+### Custom Prompts
+
+Enhance extraction accuracy with custom prompts tailored to your specific use case:
+
+```dart
+final result = await scraper.extractFromUrl(
+  url: 'https://ecommerce-site.com/product',
+  schema: {
+    'productName': 'string',
+    'price': 'number',
+    'inStock': 'boolean',
+    'reviews': 'array',
+  },
+  customInstructions: '''
+  Focus on e-commerce product information:
+  - Extract the main product title, not category names
+  - Look for current price, ignore crossed-out old prices
+  - Check availability status or stock information
+  - Extract customer review summaries or ratings
+  - Ignore shipping or return policy information
+  ''',
+);
+```
+
+You can customize prompts for different domains:
+
+```dart
+// For event websites
+customInstructions: '''
+Extract event details with focus on:
+- Event title and description
+- Date, time, and venue information
+- Ticket prices and registration links
+- Organizer or speaker information
+''',
+
+// For job listings
+customInstructions: '''
+Focus on job posting information:
+- Job title and company name
+- Salary range and benefits
+- Required skills and experience
+- Application deadline and process
+''',
+
+// For news articles
+customInstructions: '''
+Extract news article content:
+- Headline and article summary
+- Publication date and author
+- Main content without ads or navigation
+- Related tags or categories
+''',
+```
+
 ### Error Handling
 
 ```dart
