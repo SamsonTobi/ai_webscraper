@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'ai_provider.dart';
 
 /// Represents the result of a web scraping operation.
@@ -169,24 +171,8 @@ class ScrapingResult {
 
   /// Converts the result to a JSON-serializable map.
   ///
-  /// This is useful for storing results or sending them over networks.
+  /// This includes comprehensive information suitable for API responses.
   Map<String, dynamic> toJson() {
-    return <String, dynamic>{
-      'success': success,
-      'data': data,
-      'error': error,
-      'scrapingTimeMs': scrapingTime.inMilliseconds,
-      'aiProvider': aiProvider.name,
-      'url': url,
-      'timestamp': timestamp.toIso8601String(),
-      'fieldCount': fieldCount,
-    };
-  }
-
-  /// Converts the result to a detailed JSON map with additional metadata.
-  ///
-  /// This includes more comprehensive information suitable for API responses.
-  Map<String, dynamic> toDetailedJson() {
     return <String, dynamic>{
       'success': success,
       'data': data,
@@ -207,13 +193,8 @@ class ScrapingResult {
 
   @override
   String toString() {
-    if (success) {
-      return 'ScrapingResult(success: true, url: $url, provider: ${aiProvider.displayName}, '
-          'fields: $fieldCount, time: ${scrapingTime.inMilliseconds}ms)';
-    } else {
-      return 'ScrapingResult(success: false, url: $url, provider: ${aiProvider.displayName}, '
-          'error: $error, time: ${scrapingTime.inMilliseconds}ms)';
-    }
+    // Return JSON string for proper serialization in API responses
+    return jsonEncode(toJson());
   }
 
   @override
