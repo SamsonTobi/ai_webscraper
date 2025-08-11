@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'ai_provider.dart';
 
 /// Represents the result of a web scraping operation.
@@ -193,8 +191,13 @@ class ScrapingResult {
 
   @override
   String toString() {
-    // Return JSON string for proper serialization in API responses
-    return jsonEncode(toJson());
+    if (success) {
+      return 'ScrapingResult(success: true, url: $url, provider: ${aiProvider.displayName}, '
+          'fields: $fieldCount, time: ${scrapingTime.inMilliseconds}ms)';
+    } else {
+      return 'ScrapingResult(success: false, url: $url, provider: ${aiProvider.displayName}, '
+          'error: $error, time: ${scrapingTime.inMilliseconds}ms)';
+    }
   }
 
   @override

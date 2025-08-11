@@ -1,9 +1,11 @@
-import '../core/ai_provider.dart';
-import '../core/ai_model.dart';
-import '../core/exceptions.dart';
+import 'package:ai_webscraper/src/core/ai_model.dart';
+import 'package:ai_webscraper/src/core/ai_provider.dart';
+import 'package:ai_webscraper/src/core/exceptions.dart';
+import 'package:ai_webscraper/src/utils/response_cache.dart';
+
 import 'ai_client_base.dart';
-import 'openai_client.dart';
 import 'gemini_client.dart';
+import 'openai_client.dart';
 
 /// Factory class for creating AI client instances based on provider type.
 ///
@@ -17,6 +19,7 @@ class AIClientFactory {
   /// [apiKey] - The API key for authentication
   /// [timeout] - Optional timeout duration for API requests
   /// [options] - Optional provider-specific configuration
+  /// [cache] - Optional response cache for storing AI responses
   ///
   /// Returns an appropriate [AIClientBase] implementation.
   /// Throws [UnsupportedProviderException] if the provider is not supported.
@@ -25,6 +28,7 @@ class AIClientFactory {
     String apiKey, {
     Duration timeout = const Duration(seconds: 30),
     Map<String, dynamic>? options,
+    ResponseCache? cache,
   }) {
     if (apiKey.isEmpty) {
       throw ArgumentError('API key cannot be empty');
@@ -36,12 +40,14 @@ class AIClientFactory {
           model: aiModel.modelName,
           timeout: timeout,
           options: options,
+          cache: cache,
         ),
       AIProvider.gemini => GeminiClient(
           apiKey: apiKey,
           model: aiModel.modelName,
           timeout: timeout,
           options: options,
+          cache: cache,
         ),
     };
   }
@@ -66,8 +72,15 @@ class AIClientFactory {
     String apiKey, {
     Duration timeout = const Duration(seconds: 30),
     Map<String, dynamic>? options,
+    ResponseCache? cache,
   }) {
-    final client = create(aiModel, apiKey, timeout: timeout, options: options);
+    final AIClientBase client = create(
+      aiModel,
+      apiKey,
+      timeout: timeout,
+      options: options,
+      cache: cache,
+    );
 
     if (!client.validateApiKey()) {
       throw InvalidApiKeyException(

@@ -10,10 +10,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Planned
 
 - Add Claude AI provider support
-- Implement disk-based caching
-- Add custom prompt templates
 - Create middleware system for request/response processing
 - Add support for proxy configurations
+
+## [0.2.1] - 2025-08-11
+
+### Added
+- **Solved Dart Analysis Issues**
+
+## [0.2.0] - 2025-08-10
+
+### Added
+
+- **Response Caching System**: Comprehensive caching with in-memory and file-based storage
+  - Configurable cache expiration and size limits
+  - SHA-256 based cache keys for reliable deduplication
+  - Automatic cache cleanup and persistence
+  - Cache statistics and debugging support
+- **Enhanced Logging**: Detailed logging throughout the scraping pipeline
+  - Raw AI response logging for debugging
+  - HTML content preview logging
+  - Schema processing and field normalization logs
+  - Scoped loggers for different components
+- **Gemini ResponseSchema Support**: Proper implementation of Gemini's structured output
+  - Native responseSchema integration instead of text-based prompts
+  - Support for complex types: objects, typed arrays (array<string>, array<number>)
+  - Required field marking with type! syntax
+  - Automatic normalization of string "null" artifacts
+- **Improved JavaScript Scraping**: Enhanced dynamic content handling
+  - Better React/SPA content detection and waiting
+  - Network idle waiting for complete page loads
+  - Comprehensive page data extraction including structured data
+  - Debug helpers for troubleshooting dynamic content issues
+
+### Enhanced
+
+- **AI Client Architecture**: More robust and feature-rich AI integration
+  - Centralized response caching across all AI providers
+  - Detailed response parsing with fallback extraction
+  - Better error handling and provider-specific exceptions
+  - Usage metadata tracking (where supported)
+- **Schema Validation**: Extended type support and validation
+  - Object type support for complex nested data
+  - Typed array definitions for better structured output
+  - Email, URL, and date/datetime specialized types
+  - Flexible required field configuration
+- **Web Scraper Core**: Improved reliability and debugging
+  - Enhanced fallback logic between HTTP and JavaScript scraping
+  - Better content formatting for AI processing
+  - Comprehensive extraction data formatting
+  - Improved error reporting and context
+
+### Fixed
+
+- Gemini API object schema validation errors (empty properties requirement)
+- String "null" artifacts in AI responses converted to proper null values
+- JavaScript scraping timeout and waiting issues for dynamic content
+- Cache file corruption handling and error recovery
+- Schema normalization ensuring all fields are present in responses
+
+### Dependencies
+
+- Added `crypto` package for secure cache key generation
+
+## [0.1.2] - 2025-08-09
+
+### Fixed
+
+- Package dependency resolution issues
+- Improved error handling in client initialization
 
 ## [0.1.1] - 2025-08-04
 

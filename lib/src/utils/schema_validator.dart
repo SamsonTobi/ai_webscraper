@@ -6,7 +6,7 @@ import 'package:ai_webscraper/ai_webscraper.dart';
 /// and contain supported field types.
 class SchemaValidator {
   /// Set of supported schema field types.
-  static const Set<String> _supportedTypes = {
+  static const Set<String> _supportedTypes = <String>{
     'string',
     'number',
     'integer',
@@ -29,9 +29,9 @@ class SchemaValidator {
       throw const SchemaValidationException('Schema cannot be empty');
     }
 
-    for (final entry in schema.entries) {
-      final fieldName = entry.key;
-      final fieldType = entry.value;
+    for (final MapEntry<String, String> entry in schema.entries) {
+      final String fieldName = entry.key;
+      final String fieldType = entry.value;
 
       // Validate field name
       if (fieldName.trim().isEmpty) {
@@ -47,7 +47,7 @@ class SchemaValidator {
         );
       }
 
-      final normalizedType = fieldType.toLowerCase().trim();
+      final String normalizedType = fieldType.toLowerCase().trim();
       if (!_supportedTypes.contains(normalizedType)) {
         throw SchemaValidationException(
           'Unsupported schema type "$fieldType" for field "$fieldName". '
@@ -67,7 +67,7 @@ class SchemaValidator {
 
   /// Normalizes a schema by converting field types to lowercase.
   Map<String, String> normalize(Map<String, String> schema) {
-    return schema.map((key, value) => MapEntry(
+    return schema.map((String key, String value) => MapEntry(
           key.trim(),
           value.toLowerCase().trim(),
         ));
@@ -75,7 +75,7 @@ class SchemaValidator {
 
   /// Validates and normalizes a schema in one operation.
   Map<String, String> validateAndNormalize(Map<String, String> schema) {
-    final normalized = normalize(schema);
+    final Map<String, String> normalized = normalize(schema);
     validate(normalized);
     return normalized;
   }

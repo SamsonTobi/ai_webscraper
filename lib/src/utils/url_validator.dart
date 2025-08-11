@@ -6,7 +6,7 @@ import 'package:ai_webscraper/ai_webscraper.dart';
 /// supported protocols for web scraping.
 class URLValidator {
   /// Set of supported URL schemes.
-  static const Set<String> _supportedSchemes = {'http', 'https'};
+  static const Set<String> _supportedSchemes = <String>{'http', 'https'};
 
   /// Validates a URL string.
   ///
@@ -18,7 +18,7 @@ class URLValidator {
       throw const URLValidationException('URL cannot be empty', '');
     }
 
-    final trimmedUrl = url.trim();
+    final String trimmedUrl = url.trim();
     Uri parsedUri;
 
     try {
@@ -64,7 +64,7 @@ class URLValidator {
   ///
   /// Throws [URLValidationException] for the first invalid URL found.
   void validateAll(List<String> urls) {
-    for (final url in urls) {
+    for (final String url in urls) {
       validate(url);
     }
   }
@@ -78,6 +78,7 @@ class URLValidator {
     try {
       validate(url);
       return true;
+    // ignore: avoid_catches_without_on_clauses
     } catch (e) {
       return false;
     }
@@ -90,7 +91,7 @@ class URLValidator {
   ///
   /// Returns the normalized URL.
   String normalize(String url, [String defaultScheme = 'https']) {
-    final trimmed = url.trim();
+    final String trimmed = url.trim();
 
     if (trimmed.isEmpty) {
       return trimmed;
@@ -105,6 +106,7 @@ class URLValidator {
   }
 
   /// Gets the list of supported URL schemes.
+  // ignore: always_specify_types
   Set<String> get supportedSchemes => Set.from(_supportedSchemes);
 
   /// Extracts the domain from a URL.
@@ -114,12 +116,12 @@ class URLValidator {
   /// Returns the domain string, or null if the URL is invalid.
   String? extractDomain(String url) {
     try {
-      final trimmed = url.trim();
+      final String trimmed = url.trim();
       if (trimmed.isEmpty) {
         return null;
       }
 
-      final uri = Uri.parse(trimmed);
+      final Uri uri = Uri.parse(trimmed);
 
       // If the URI has a host, return it
       if (uri.host.isNotEmpty) {
@@ -129,13 +131,14 @@ class URLValidator {
       // If no host but looks like a domain without scheme, try to extract it
       if (!uri.hasScheme && !trimmed.contains('/') && trimmed.contains('.')) {
         // This might be a domain without scheme like 'example.com'
-        final withScheme = Uri.parse('http://$trimmed');
+        final Uri withScheme = Uri.parse('http://$trimmed');
         if (withScheme.host.isNotEmpty) {
           return withScheme.host;
         }
       }
 
       return null;
+    // ignore: avoid_catches_without_on_clauses
     } catch (e) {
       return null;
     }
@@ -145,17 +148,17 @@ class URLValidator {
   ///
   /// This is a heuristic check based on common patterns.
   bool isLikelySPA(String url) {
-    final domain = extractDomain(url)?.toLowerCase() ?? '';
-    final path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
+    final String domain = extractDomain(url)?.toLowerCase() ?? '';
+    final String path = Uri.tryParse(url)?.path.toLowerCase() ?? '';
 
     // Common SPA indicators
-    final spaIndicators = [
+    final List<String> spaIndicators = <String>[
       'app.',
       'admin.',
       'dashboard.',
     ];
 
-    final pathIndicators = [
+    final List<String> pathIndicators = <String>[
       '/app/',
       '/admin/',
       '/dashboard/',

@@ -1,3 +1,5 @@
+// ignore_for_file: use_setters_to_change_properties
+
 import 'dart:io';
 
 /// Log levels for controlling logging output.
@@ -93,7 +95,7 @@ class Logger {
   static Future<void> closeFileLogging() async {
     try {
       await _fileSink?.close();
-    } catch (e) {
+    } on FormatException catch (e) {
       // Ignore errors when closing, but still null out the reference
       if (_outputToConsole) {
         stderr.writeln('[ERROR] Error closing file sink: $e');
@@ -175,11 +177,11 @@ class Logger {
         if (stackTrace != null) {
           _fileSink!.writeln('Stack trace: $stackTrace');
         }
-      } catch (e) {
+      } on FormatException catch (e) {
         // If file logging fails, close the sink and continue with console logging only
         try {
           _fileSink?.close();
-        } catch (_) {
+        } on FormatException catch (_) {
           // Ignore errors when closing after a failure
         }
         _fileSink = null;
@@ -258,7 +260,7 @@ class Logger {
     debug('Starting $operation');
 
     try {
-      final result = await function();
+      final T result = await function();
       stopwatch.stop();
       info('Completed $operation in ${stopwatch.elapsedMilliseconds}ms');
       return result;

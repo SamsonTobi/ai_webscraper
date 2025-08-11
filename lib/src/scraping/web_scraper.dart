@@ -1,6 +1,9 @@
+// ignore_for_file: public_member_api_docs
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:ai_webscraper/src/utils/logger.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart';
@@ -13,6 +16,24 @@ import 'content_extractor.dart';
 /// extracts content using HTML parsing. It's fast and lightweight
 /// but cannot handle JavaScript-rendered content.
 class WebScraper {
+
+  /// Creates a new web scraper instance.
+  ///
+  /// [timeout] sets the maximum time to wait for a response.
+  /// [userAgent] sets the User-Agent header for requests.
+  /// [headers] provides additional headers to include with requests.
+  /// [followRedirects] determines whether to follow HTTP redirects.
+  /// [maxRedirects] sets the maximum number of redirects to follow.
+  WebScraper({
+    this.timeout = const Duration(seconds: 30),
+    this.userAgent =
+        'AI-WebScraper/1.0 (+https://github.com/SamsonTobi/ai_webscraper)',
+    this.headers = const <String, String>{},
+    this.followRedirects = true,
+    this.maxRedirects = 5,
+    http.Client? client,
+  })  : _client = client ?? http.Client(),
+        _contentExtractor = ContentExtractor();
   /// The HTTP client used for making requests.
   final http.Client _client;
 
@@ -34,23 +55,7 @@ class WebScraper {
   /// Content extractor for processing HTML content.
   final ContentExtractor _contentExtractor;
 
-  /// Creates a new web scraper instance.
-  ///
-  /// [timeout] sets the maximum time to wait for a response.
-  /// [userAgent] sets the User-Agent header for requests.
-  /// [headers] provides additional headers to include with requests.
-  /// [followRedirects] determines whether to follow HTTP redirects.
-  /// [maxRedirects] sets the maximum number of redirects to follow.
-  WebScraper({
-    this.timeout = const Duration(seconds: 30),
-    this.userAgent =
-        'AI-WebScraper/1.0 (+https://github.com/yourusername/ai_webscraper)',
-    this.headers = const <String, String>{},
-    this.followRedirects = true,
-    this.maxRedirects = 5,
-    http.Client? client,
-  })  : _client = client ?? http.Client(),
-        _contentExtractor = ContentExtractor();
+  static final ScopedLogger _logger = Logger.scoped('WebScraper');
 
   /// Scrapes content from the specified URL.
   ///
@@ -71,8 +76,8 @@ class WebScraper {
       );
     }
 
-    final uri = Uri.parse(url);
-    final requestHeaders = <String, String>{
+    final Uri uri = Uri.parse(url);
+    final Map<String, String> requestHeaders = <String, String>{
       'User-Agent': userAgent,
       'Accept':
           'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -85,7 +90,7 @@ class WebScraper {
     };
 
     try {
-      final response =
+      final http.Response response =
           await _client.get(uri, headers: requestHeaders).timeout(timeout);
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -93,8 +98,8 @@ class WebScraper {
       } else if (response.statusCode >= 300 && response.statusCode < 400) {
         // Handle redirects manually if needed
         if (followRedirects && response.headers.containsKey('location')) {
-          final redirectUrl = response.headers['location']!;
-          final resolvedUrl = uri.resolve(redirectUrl).toString();
+          final String redirectUrl = response.headers['location']!;
+          final String resolvedUrl = uri.resolve(redirectUrl).toString();
           return await scrapeUrl(resolvedUrl, customHeaders: customHeaders);
         }
         throw ScrapingException(
@@ -108,7 +113,7 @@ class WebScraper {
           'HTTP request failed with status ${response.statusCode}',
           url,
           response.statusCode,
-          'Response body: ${response.body.length > 200 ? response.body.substring(0, 200) + "..." : response.body}',
+          'Response body: ${response.body.length > 200 ? "${response.body.substring(0, 200)}..." : response.body}',
         );
       }
     } on TimeoutException {
@@ -163,7 +168,7 @@ class WebScraper {
     bool preserveFormatting = false,
   }) {
     try {
-      final document = html_parser.parse(htmlContent);
+      final Document document = html_parser.parse(htmlContent);
       return _contentExtractor.extractTextContent(
         document,
         preserveFormatting: preserveFormatting,
@@ -185,7 +190,7 @@ class WebScraper {
   /// [selector] is the CSS selector to match elements.
   List<Element> extractElements(String htmlContent, String selector) {
     try {
-      final document = html_parser.parse(htmlContent);
+      final Document document = html_parser.parse(htmlContent);
       return _contentExtractor.extractElements(document, selector);
     } catch (e) {
       throw ParsingException(
@@ -203,7 +208,7 @@ class WebScraper {
   /// [htmlContent] is the raw HTML content.
   Map<String, String> extractMetadata(String htmlContent) {
     try {
-      final document = html_parser.parse(htmlContent);
+      final Document document = html_parser.parse(htmlContent);
       return _contentExtractor.extractMetadata(document);
     } catch (e) {
       throw ParsingException(
@@ -222,7 +227,7 @@ class WebScraper {
   /// [baseUrl] is used to resolve relative URLs.
   List<String> extractLinks(String htmlContent, {String? baseUrl}) {
     try {
-      final document = html_parser.parse(htmlContent);
+      final Document document = html_parser.parse(htmlContent);
       return _contentExtractor.extractLinks(document, baseUrl: baseUrl);
     } catch (e) {
       throw ParsingException(
@@ -244,7 +249,7 @@ class WebScraper {
     String? baseUrl,
   }) {
     try {
-      final document = html_parser.parse(htmlContent);
+      final Document document = html_parser.parse(htmlContent);
       return _contentExtractor.extractImages(document, baseUrl: baseUrl);
     } catch (e) {
       throw ParsingException(
@@ -269,28 +274,28 @@ class WebScraper {
     bool continueOnError = true,
     Map<String, String>? customHeaders,
   }) async {
-    final results = <String, String>{};
-    final semaphore = Semaphore(concurrency);
+    final Map<String, String> results = <String, String>{};
+    final Semaphore semaphore = Semaphore(concurrency);
 
-    final futures = urls.map((url) async {
+    final Iterable<Future<MapEntry<String, String>>> futures = urls.map((String url) async {
       await semaphore.acquire();
       try {
-        final content = await scrapeUrl(url, customHeaders: customHeaders);
-        return MapEntry(url, content);
+        final String content = await scrapeUrl(url, customHeaders: customHeaders);
+        return MapEntry<String, String>(url, content);
       } catch (e) {
         if (!continueOnError) {
           rethrow;
         }
         // Log error but continue with other URLs
-        print('Warning: Failed to scrape $url: $e');
-        return MapEntry(url, '');
+        _logger.info('Failed to scrape $url: $e');
+        return MapEntry<String, String>(url, '');
       } finally {
         semaphore.release();
       }
     });
 
-    final completedResults = await Future.wait(futures);
-    for (final entry in completedResults) {
+    final List<MapEntry<String, String>> completedResults = await Future.wait(futures);
+    for (final MapEntry<String, String> entry in completedResults) {
       if (entry.value.isNotEmpty) {
         results[entry.key] = entry.value;
       }
@@ -301,7 +306,7 @@ class WebScraper {
 
   /// Heuristic check to see if content looks like HTML even without proper content-type.
   bool _looksLikeHtml(String content) {
-    final trimmed = content.trim().toLowerCase();
+    final String trimmed = content.trim().toLowerCase();
     return trimmed.startsWith('<!doctype html') ||
         trimmed.startsWith('<html') ||
         trimmed.contains('<body') ||
@@ -312,21 +317,24 @@ class WebScraper {
   /// Validates URL format and protocol.
   bool _isValidUrl(String url) {
     try {
-      if (url.trim().isEmpty) return false;
+      if (url.trim().isEmpty) {
+        return false;
+      }
 
-      final uri = Uri.parse(url);
+      final Uri uri = Uri.parse(url);
       return uri.hasScheme &&
           (uri.scheme == 'http' || uri.scheme == 'https') &&
           uri.hasAuthority &&
           uri.host.isNotEmpty; // Ensure host is not empty
-    } catch (e) {
+    } on FormatException catch (e) {
+      _logger.info('Something went wrong with validating $url: $e');
       return false;
     }
   }
 
   /// Decodes HTTP response body handling different encodings.
   String _decodeResponse(http.Response response) {
-    final contentType = response.headers['content-type'] ?? '';
+    final String contentType = response.headers['content-type'] ?? '';
 
     // Check if content type indicates HTML (be more lenient for testing)
     if (contentType.isNotEmpty &&
@@ -344,7 +352,7 @@ class WebScraper {
 
     // Handle different encodings
     String encoding = 'utf-8';
-    final contentTypeMatch = RegExp(r'charset=([^;]+)').firstMatch(contentType);
+    final RegExpMatch? contentTypeMatch = RegExp(r'charset=([^;]+)').firstMatch(contentType);
     if (contentTypeMatch != null) {
       encoding = contentTypeMatch.group(1)!.toLowerCase();
     }
@@ -361,7 +369,8 @@ class WebScraper {
           // Fallback to UTF-8 for unknown encodings
           return utf8.decode(response.bodyBytes, allowMalformed: true);
       }
-    } catch (e) {
+    } on FormatException catch (e) {
+      _logger.info('Failed to decode $response: $e');
       // Final fallback - return raw string
       return response.body;
     }
@@ -375,11 +384,12 @@ class WebScraper {
 
 /// Simple semaphore implementation for controlling concurrency.
 class Semaphore {
+
+  Semaphore(this.maxCount) : _currentCount = maxCount;
+
   final int maxCount;
   int _currentCount;
   final List<Completer<void>> _waitQueue = <Completer<void>>[];
-
-  Semaphore(this.maxCount) : _currentCount = maxCount;
 
   Future<void> acquire() async {
     if (_currentCount > 0) {
@@ -387,15 +397,15 @@ class Semaphore {
       return;
     }
 
-    final completer = Completer<void>();
+    final Completer<void> completer = Completer<void>();
     _waitQueue.add(completer);
     return completer.future;
   }
 
   void release() {
     if (_waitQueue.isNotEmpty) {
-      final completer = _waitQueue.removeAt(0);
-      completer.complete();
+      _waitQueue.removeAt(0)..complete();
+
     } else {
       _currentCount++;
     }

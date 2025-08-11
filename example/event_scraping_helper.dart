@@ -32,76 +32,159 @@ class EventScrapingHelper {
 
   /// Alternative single event schema for pages with only one event
   static Map<String, String> get singleEventSchema => {
-        'title': 'string',
+        'name': 'string',
         'description': 'text',
+        'date': 'date',
+        'startDate': 'date',
+        'endDate': 'date',
+        'startTime': 'string',
+        'endTime': 'string',
+        'location': 'string',
         'ticketLink': 'url',
-        'date': 'string',
-        'time': 'string',
-        'venue': 'string',
-        'price': 'string',
+        'address': 'string',
         'organizer': 'string',
+        'category': 'string',
+        'price': 'string',
+        'website': 'url',
+        'contact': 'string',
+        'tags': 'array',
+        'capacity': 'string',
+        'registration': 'string',
+        'bannerUrl': 'url',
+        'logoUrl': 'url',
+        'socialMedia': 'object',
+        'contactInfo': 'object',
+        'schedule': 'array',
+        'sponsors': 'array',
       };
 
   /// Standard AI prompt for event extraction - supports multiple events
   static String get eventExtractionPrompt => '''
 Extract ALL events from this webpage and return them as an array in JSON format.
 
-Look for multiple events on the page - this could be:
-- Event listing pages with multiple events
-- Conference schedules with multiple sessions
-- Event directories or search results
-- Calendar pages with multiple dates
-- Single event pages (return as array with one item)
+Focus on extracting event details and basic information:
+- Extract the main event name/title, not page or site titles
+- Look for detailed event description (2-3 paragraphs ideal)
+- Find actual event dates and times, not website update dates
+- Extract venue/location information including address if available
+- Look for event organizer contact information
+- Find registration/ticket information and pricing
+- Extract event category or type
+- Look for official event website URL if different from scraped URL
+- Find social media links as an object with keys: twitter, linkedin, instagram, facebook
+- Extract contact info as an object with keys: email, phone, address
+- Look for banner/hero images (bannerUrl) and logos (logoUrl)
+- If available, extract basic schedule information as an array of objects
+- If available, extract sponsor information as an array of objects
+- Ignore navigation, footer, or sidebar content
+- Focus on the main event content area
 
-Return JSON in this exact format:
+Extract sponsor and exhibitor information from this content.
+Focus on companies, organizations, and partners supporting the event.
+
+Return ONLY valid JSON with this structure:
 {
-  "events": [
+  "sponsors": [
     {
-      "title": "Event name/title",
-      "description": "Brief description or summary",
-      "ticketLink": "Complete URL for tickets/registration (full URL with http/https)",
-      "date": "Event date in readable format",
-      "time": "Event time or schedule",
-      "venue": "Location/venue/address",
-      "price": "Pricing information or 'Free' or 'Not available'",
-      "organizer": "Event organizer/host or 'Not available'"
+      "name": "Sponsor name",
+      "logoUrl": "Sponsor logo URL or null",
+      "description": "Sponsor description or null",
+      "boothInfo": "Booth location/info or null", 
+      "offerings": ["offering1", "offering2"] or []
     }
   ]
 }
 
-Important instructions:
-- Find ALL events on the page, not just the first one
-- Each event should be a separate object in the events array
-- If only one event is found, still return it as an array with one item
-- For any missing information, use "Not available" as the value
-- For ticketLink, provide complete URLs starting with http/https
-- Look thoroughly through the entire page including headers, sidebars, navigation, and footer
-- Check for pagination or "load more" buttons that might indicate more events
-- For conference pages, extract individual sessions as separate events if they have distinct information
+Guidelines:
+- Only include actual sponsors/exhibitors, not event organizers
+- Extract booth numbers, locations, or exhibition details
+- Include special offers, discounts, or giveaways mentioned
+- Use null for missing information
+- Ensure logoUrl contains actual image URLs, not placeholders
   ''';
 
   /// Alternative prompt for single event pages
   static String get singleEventExtractionPrompt => '''
-Extract comprehensive event information from this webpage and return in JSON format with these exact fields:
+Extract comprehensive event information from this webpage and return in JSON format.
+Focus on extracting complete event details, branding assets, social media, contact info, schedule, and sponsor information.
 
-Required fields to extract:
-- title: The main title or name of the event
-- description: A brief description, summary, or details about what the event is about
-- ticketLink: The complete URL where people can buy tickets or register (must be a full URL starting with http/https)
-- date: The date when the event takes place (in any readable format)
-- time: The time when the event starts or the schedule information
-- venue: The location where the event takes place (venue name, address, or location details)
-- price: Ticket price information, cost details, or pricing tiers
-- organizer: Who is hosting or organizing the event
+Return ONLY valid JSON with this exact structure:
+{
+  "name": "Event title/name",
+  "description": "Detailed event description (2-3 paragraphs)",
+  "date": "Main event date (YYYY-MM-DD format)",
+  "startDate": "Start date (YYYY-MM-DD format) or null",
+  "endDate": "End date (YYYY-MM-DD format) or null", 
+  "startTime": "Start time (HH:mm format) or null",
+  "endTime": "End time (HH:mm format) or null",
+  "location": "Event venue/location",
+  "ticketLink": "Complete ticket/registration URL",
+  "address": "Physical address of venue",
+  "organizer": "Event organizer/host name",
+  "category": "Event category/type",
+  "price": "Ticket pricing information",
+  "website": "Official event website URL",
+  "contact": "Main contact information",
+  "tags": ["tag1", "tag2"] or [],
+  "capacity": "Event capacity/attendance limit",
+  "registration": "Registration details/requirements", 
+  "bannerUrl": "Main banner/hero image URL",
+  "logoUrl": "Event logo URL",
+  "socialMedia": {
+    "twitter": "Twitter handle/URL or null",
+    "linkedin": "LinkedIn page URL or null",
+    "instagram": "Instagram handle/URL or null", 
+    "facebook": "Facebook page URL or null"
+  },
+  "contactInfo": {
+    "email": "Contact email or null",
+    "phone": "Contact phone or null",
+    "address": "Contact address or null"
+  },
+  "schedule": [
+    {
+      "name": "Activity/session name",
+      "startTime": "Session start time or null",
+      "endTime": "Session end time or null",
+      "description": "Activity description or null",
+      "host": "Speaker/host name or null",
+      "venue": "Session venue/room name or null",
+      "resources": ["resource1", "resource2"] or []
+    }
+  ],
+  "sponsors": [
+    {
+      "name": "Sponsor name",
+      "logoUrl": "Sponsor logo URL or null",
+      "description": "Sponsor description or null",
+      "boothInfo": "Booth location/info or null",
+      "offerings": ["offering1", "offering2"] or []
+    }
+  ]
+}
 
-Important instructions:
-- Return data in valid JSON format matching the exact field names above
-- If any information is not found or available, use "Not available" as the value
-- For ticketLink, provide the complete, clickable URL (not just partial links)
-- For dates and times, extract in the most readable format available
-- For price, include currency and any pricing details found
-- Be thorough in searching the entire page content including headers, sidebars, and footer information
-- Look for alternative terms like "register", "sign up", "buy now", "get tickets" for ticket links
+Extraction guidelines:
+- Extract the main event name/title, not page or site titles
+- Look for detailed event description (2-3 paragraphs ideal)
+- Find actual event dates and times, not website update dates
+- Extract venue/location information including full address if available
+- Look for event organizer and contact information
+- Find registration/ticket information, pricing, and capacity details
+- Extract event category, type, or tags
+- Look for official event website URL if different from scraped URL
+- Find social media links for twitter, linkedin, instagram, facebook
+- Extract contact info including email, phone, and address
+- Look for banner/hero images and event logos (actual image URLs only)
+- Extract schedule/agenda information including sessions, speakers, times
+- Find sponsor and exhibitor information with booth details and offerings
+- Use null for any fields where information is not found
+- For dates, use YYYY-MM-DD format; for times, use HH:mm format
+- Ensure all URLs are complete and properly formatted
+- Only include actual sponsors/exhibitors, not event organizers
+- Ignore navigation, footer, or sidebar content unrelated to the event
+- Focus on the main event content area and structured information
+- Look for alternative terms like "register", "sign up", "buy now", "get tickets"
+- Ensure the JSON is valid and properly formatted
   ''';
 
   /// Validate and get API key from .env file or environment
@@ -158,9 +241,10 @@ Important instructions:
     final scraper = AIWebScraper(
       aiModel: AIModel.gemini20FlashLite,
       apiKey: apiKey,
-      timeout: const Duration(seconds: 45),
+      timeout:
+          const Duration(seconds: 1000), // Increased timeout for complex pages
       useJavaScript:
-          false, // Use JavaScript scraping for better content extraction
+          true, // Use JavaScript scraping for better content extraction
     );
 
     Logger.info('AI WebScraper initialized with Gemini 1.5 Pro');
@@ -183,6 +267,7 @@ Important instructions:
       final result = await scraper.extractFromUrl(
         url: url,
         schema: extractMultiple ? eventSchema : singleEventSchema,
+        useJavaScript: true, // Enable JS for dynamic content
         customInstructions: extractMultiple
             ? eventExtractionPrompt
             : singleEventExtractionPrompt,
@@ -366,7 +451,7 @@ Important instructions:
 
   /// Default event URLs for testing
   static List<String> get defaultEventUrls => [
-        'https://www.flutterbytesconf.com/', // Single event
+        'https://sessionize.com/view/iwyk9p10/GridSmart?format=Embed_Styled_Html&isDark=False&title=Open%20Source%20Festival%202025', // Single event
         // Add more test URLs as needed
       ];
 

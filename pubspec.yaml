@@ -1,6 +1,6 @@
 name: ai_webscraper
-description: A comprehensive AI-powered web scraper for Dart with OpenAI and Google Gemini integration, featuring a Flutter web dashboard
-version: 0.1.2
+description: A comprehensive AI-powered web scraper for Dart with OpenAI and Google Gemini integration, featuring response caching and enhanced logging
+version: 0.2.0
 homepage: https://github.com/SamsonTobi/ai_webscraper
 repository: https://github.com/SamsonTobi/ai_webscraper
 issue_tracker: https://github.com/SamsonTobi/ai_webscraper/issues
@@ -17,6 +17,7 @@ dependencies:
   puppeteer: ^3.19.0
   google_generative_ai: ^0.4.7
   dotenv: ^4.2.0
+  crypto: ^3.0.6
 
 dev_dependencies:
   lints: ^5.0.0

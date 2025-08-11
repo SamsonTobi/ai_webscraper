@@ -1,3 +1,5 @@
+import 'dart:developer' as debug;
+
 import 'package:html/dom.dart';
 
 /// Utility class for extracting and processing content from HTML documents.
@@ -7,7 +9,7 @@ import 'package:html/dom.dart';
 /// metadata, and structured data.
 class ContentExtractor {
   /// Elements that should be completely ignored during text extraction.
-  static const List<String> _ignoredElements = [
+  static const List<String> _ignoredElements = <String>[
     'script',
     'style',
     'noscript',
@@ -22,7 +24,7 @@ class ContentExtractor {
   ];
 
   /// Elements that should be treated as block-level (add line breaks).
-  static const List<String> _blockElements = [
+  static const List<String> _blockElements = <String>[
     'div',
     'p',
     'h1',
@@ -79,8 +81,8 @@ class ContentExtractor {
     _removeIgnoredElements(document);
 
     // Extract text with proper formatting
-    final textBuffer = StringBuffer();
-    final bodyElement = document.body ?? document.documentElement;
+    final StringBuffer textBuffer = StringBuffer();
+    final Element? bodyElement = document.body ?? document.documentElement;
     if (bodyElement != null) {
       _extractTextFromElement(bodyElement, textBuffer, preserveFormatting);
     }
@@ -96,11 +98,11 @@ class ContentExtractor {
     if (maxLength != null && text.length > maxLength) {
       text = text.substring(0, maxLength);
       // Try to end at a word boundary
-      final lastSpace = text.lastIndexOf(' ');
+      final int lastSpace = text.lastIndexOf(' ');
       if (lastSpace > maxLength * 0.8) {
-        text = text.substring(0, lastSpace) + '...';
+        text = '${text.substring(0, lastSpace)}...';
       } else {
-        text = text + '...';
+        text = '$text...';
       }
     }
 
@@ -131,19 +133,19 @@ class ContentExtractor {
   ///
   /// [document] is the parsed HTML document.
   Map<String, String> extractMetadata(Document document) {
-    final metadata = <String, String>{};
+    final Map<String, String> metadata = <String, String>{};
 
     // Extract title
-    final titleElement = document.querySelector('title');
+    final Element? titleElement = document.querySelector('title');
     if (titleElement != null) {
       metadata['title'] = titleElement.text.trim();
     }
 
     // Extract meta tags
-    final metaTags = document.querySelectorAll('meta');
-    for (final meta in metaTags) {
-      final name = meta.attributes['name'] ?? meta.attributes['property'] ?? '';
-      final content = meta.attributes['content'] ?? '';
+    final List<Element> metaTags = document.querySelectorAll('meta');
+    for (final Element meta in metaTags) {
+      final String name = meta.attributes['name'] ?? meta.attributes['property'] ?? '';
+      final String content = meta.attributes['content'] ?? '';
 
       if (name.isNotEmpty && content.isNotEmpty) {
         metadata[name.toLowerCase()] = content;
@@ -160,18 +162,18 @@ class ContentExtractor {
     _extractStructuredData(document, metadata);
 
     // Extract canonical URL
-    final canonicalLink = document.querySelector('link[rel="canonical"]');
+    final Element? canonicalLink = document.querySelector('link[rel="canonical"]');
     if (canonicalLink != null) {
-      final href = canonicalLink.attributes['href'];
+      final String? href = canonicalLink.attributes['href'];
       if (href != null) {
         metadata['canonical'] = href;
       }
     }
 
     // Extract language
-    final htmlElement = document.querySelector('html');
+    final Element? htmlElement = document.querySelector('html');
     if (htmlElement != null) {
-      final lang = htmlElement.attributes['lang'];
+      final String? lang = htmlElement.attributes['lang'];
       if (lang != null) {
         metadata['language'] = lang;
       }
@@ -185,13 +187,13 @@ class ContentExtractor {
   /// [document] is the parsed HTML document.
   /// [baseUrl] is used to resolve relative URLs.
   List<String> extractLinks(Document document, {String? baseUrl}) {
-    final links = <String>[];
-    final linkElements = document.querySelectorAll('a[href]');
+    final List<String> links = <String>[];
+    final List<Element> linkElements = document.querySelectorAll('a[href]');
 
-    for (final link in linkElements) {
-      final href = link.attributes['href'];
+    for (final Element link in linkElements) {
+      final String? href = link.attributes['href'];
       if (href != null && href.isNotEmpty) {
-        final resolvedUrl = _resolveUrl(href, baseUrl);
+        final String? resolvedUrl = _resolveUrl(href, baseUrl);
         if (resolvedUrl != null && !links.contains(resolvedUrl)) {
           links.add(resolvedUrl);
         }
@@ -209,18 +211,18 @@ class ContentExtractor {
   /// [baseUrl] is used to resolve relative URLs.
   List<Map<String, String>> extractImages(Document document,
       {String? baseUrl}) {
-    final images = <Map<String, String>>[];
-    final imageElements = document.querySelectorAll('img[src]');
+    final List<Map<String, String>> images = <Map<String, String>>[];
+    final List<Element> imageElements = document.querySelectorAll('img[src]');
 
-    for (final img in imageElements) {
-      final src = img.attributes['src'];
-      final alt = img.attributes['alt'] ?? '';
-      final title = img.attributes['title'] ?? '';
+    for (final Element img in imageElements) {
+      final String? src = img.attributes['src'];
+      final String alt = img.attributes['alt'] ?? '';
+      final String title = img.attributes['title'] ?? '';
 
       if (src != null && src.isNotEmpty) {
-        final resolvedUrl = _resolveUrl(src, baseUrl);
+        final String? resolvedUrl = _resolveUrl(src, baseUrl);
         if (resolvedUrl != null) {
-          images.add({
+          images.add(<String, String>{
             'src': resolvedUrl,
             'alt': alt,
             'title': title,
@@ -230,13 +232,13 @@ class ContentExtractor {
     }
 
     // Also extract images from picture elements
-    final pictureElements = document.querySelectorAll('picture source[srcset]');
-    for (final source in pictureElements) {
-      final srcset = source.attributes['srcset'];
+    final List<Element> pictureElements = document.querySelectorAll('picture source[srcset]');
+    for (final Element source in pictureElements) {
+      final String? srcset = source.attributes['srcset'];
       if (srcset != null && srcset.isNotEmpty) {
-        final urls = _parseSrcset(srcset, baseUrl);
-        for (final url in urls) {
-          images.add({
+        final List<String> urls = _parseSrcset(srcset, baseUrl);
+        for (final String url in urls) {
+          images.add(<String, String>{
             'src': url,
             'alt': '',
             'title': '',
@@ -254,18 +256,18 @@ class ContentExtractor {
   ///
   /// [document] is the parsed HTML document.
   List<List<List<String>>> extractTables(Document document) {
-    final tables = <List<List<String>>>[];
-    final tableElements = document.querySelectorAll('table');
+    final List<List<List<String>>> tables = <List<List<String>>>[];
+    final List<Element> tableElements = document.querySelectorAll('table');
 
-    for (final table in tableElements) {
-      final tableData = <List<String>>[];
-      final rows = table.querySelectorAll('tr');
+    for (final Element table in tableElements) {
+      final List<List<String>> tableData = <List<String>>[];
+      final List<Element> rows = table.querySelectorAll('tr');
 
-      for (final row in rows) {
-        final rowData = <String>[];
-        final cells = row.querySelectorAll('td, th');
+      for (final Element row in rows) {
+        final List<String> rowData = <String>[];
+        final List<Element> cells = row.querySelectorAll('td, th');
 
-        for (final cell in cells) {
+        for (final Element cell in cells) {
           rowData.add(cell.text.trim());
         }
 
@@ -288,19 +290,19 @@ class ContentExtractor {
   ///
   /// [document] is the parsed HTML document.
   List<Map<String, dynamic>> extractForms(Document document) {
-    final forms = <Map<String, dynamic>>[];
-    final formElements = document.querySelectorAll('form');
+    final List<Map<String, dynamic>> forms = <Map<String, dynamic>>[];
+    final List<Element> formElements = document.querySelectorAll('form');
 
-    for (final form in formElements) {
-      final formData = <String, dynamic>{
+    for (final Element form in formElements) {
+      final Map<String, dynamic> formData = <String, dynamic>{
         'action': form.attributes['action'] ?? '',
         'method': form.attributes['method'] ?? 'get',
         'fields': <Map<String, String>>[],
       };
 
-      final inputElements = form.querySelectorAll('input, textarea, select');
-      for (final input in inputElements) {
-        final fieldData = <String, String>{
+      final List<Element> inputElements = form.querySelectorAll('input, textarea, select');
+      for (final Element input in inputElements) {
+        final Map<String, String> fieldData = <String, String>{
           'name': input.attributes['name'] ?? '',
           'type': input.attributes['type'] ?? 'text',
           'value': input.attributes['value'] ?? '',
@@ -322,9 +324,9 @@ class ContentExtractor {
     StringBuffer buffer,
     bool preserveFormatting,
   ) {
-    for (final node in element.nodes) {
+    for (final Node node in element.nodes) {
       if (node is Text) {
-        final text = node.text;
+        final String text = node.text;
         if (text.trim().isNotEmpty) {
           buffer.write(text);
           if (preserveFormatting) {
@@ -332,7 +334,7 @@ class ContentExtractor {
           }
         }
       } else if (node is Element) {
-        final tagName = node.localName?.toLowerCase() ?? '';
+        final String tagName = node.localName?.toLowerCase() ?? '';
 
         // Skip ignored elements
         if (_ignoredElements.contains(tagName)) {
@@ -357,9 +359,9 @@ class ContentExtractor {
 
   /// Removes ignored elements from the document.
   void _removeIgnoredElements(Document document) {
-    for (final tagName in _ignoredElements) {
-      final elements = document.querySelectorAll(tagName);
-      for (final element in elements) {
+    for (final String tagName in _ignoredElements) {
+      final List<Element> elements = document.querySelectorAll(tagName);
+      for (final Element element in elements) {
         element.remove();
       }
     }
@@ -377,10 +379,10 @@ class ContentExtractor {
   /// Extracts Open Graph metadata.
   void _extractOpenGraphMetadata(
       Document document, Map<String, String> metadata) {
-    final ogTags = document.querySelectorAll('meta[property^="og:"]');
-    for (final tag in ogTags) {
-      final property = tag.attributes['property'];
-      final content = tag.attributes['content'];
+    final List<Element> ogTags = document.querySelectorAll('meta[property^="og:"]');
+    for (final Element tag in ogTags) {
+      final String? property = tag.attributes['property'];
+      final String? content = tag.attributes['content'];
       if (property != null && content != null) {
         metadata[property] = content;
       }
@@ -390,10 +392,10 @@ class ContentExtractor {
   /// Extracts Twitter Card metadata.
   void _extractTwitterMetadata(
       Document document, Map<String, String> metadata) {
-    final twitterTags = document.querySelectorAll('meta[name^="twitter:"]');
-    for (final tag in twitterTags) {
-      final name = tag.attributes['name'];
-      final content = tag.attributes['content'];
+    final List<Element> twitterTags = document.querySelectorAll('meta[name^="twitter:"]');
+    for (final Element tag in twitterTags) {
+      final String? name = tag.attributes['name'];
+      final String? content = tag.attributes['content'];
       if (name != null && content != null) {
         metadata[name] = content;
       }
@@ -403,18 +405,18 @@ class ContentExtractor {
   /// Extracts structured data (JSON-LD, microdata, etc.).
   void _extractStructuredData(Document document, Map<String, String> metadata) {
     // Extract JSON-LD
-    final jsonLdScripts =
+    final List<Element> jsonLdScripts =
         document.querySelectorAll('script[type="application/ld+json"]');
     for (int i = 0; i < jsonLdScripts.length; i++) {
-      final script = jsonLdScripts[i];
+      final Element script = jsonLdScripts[i];
       metadata['json-ld-${i + 1}'] = script.text;
     }
 
     // Extract microdata (basic implementation)
-    final microdataElements = document.querySelectorAll('[itemscope]');
+    final List<Element> microdataElements = document.querySelectorAll('[itemscope]');
     for (int i = 0; i < microdataElements.length; i++) {
-      final element = microdataElements[i];
-      final itemType = element.attributes['itemtype'] ?? '';
+      final Element element = microdataElements[i];
+      final String itemType = element.attributes['itemtype'] ?? '';
       if (itemType.isNotEmpty) {
         metadata['microdata-type-${i + 1}'] = itemType;
       }
@@ -436,26 +438,27 @@ class ContentExtractor {
     }
 
     try {
-      final base = Uri.parse(baseUrl);
-      final resolved = base.resolve(url);
+      final Uri base = Uri.parse(baseUrl);
+      final Uri resolved = base.resolve(url);
       return resolved.toString();
-    } catch (e) {
+    } on Exception catch (e) {
+      debug.log('Failed to resolve URL: $url , $e');
       return null; // Invalid URL
     }
   }
 
   /// Parses srcset attribute to extract image URLs.
   List<String> _parseSrcset(String srcset, String? baseUrl) {
-    final urls = <String>[];
-    final parts = srcset.split(',');
+    final List<String> urls = <String>[];
+    final List<String> parts = srcset.split(',');
 
-    for (final part in parts) {
-      final trimmed = part.trim();
-      final spaceIndex = trimmed.indexOf(' ');
-      final url = spaceIndex > 0 ? trimmed.substring(0, spaceIndex) : trimmed;
+    for (final String part in parts) {
+      final String trimmed = part.trim();
+      final int spaceIndex = trimmed.indexOf(' ');
+      final String url = spaceIndex > 0 ? trimmed.substring(0, spaceIndex) : trimmed;
 
       if (url.isNotEmpty) {
-        final resolvedUrl = _resolveUrl(url, baseUrl);
+        final String? resolvedUrl = _resolveUrl(url, baseUrl);
         if (resolvedUrl != null && !urls.contains(resolvedUrl)) {
           urls.add(resolvedUrl);
         }

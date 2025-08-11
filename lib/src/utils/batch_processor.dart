@@ -28,15 +28,15 @@ class BatchProcessor {
       throw ArgumentError('Concurrency must be at least 1');
     }
 
-    final results = <T>[];
-    final semaphore = Semaphore(concurrency);
+    final List<T> results = <T>[];
+    final Semaphore semaphore = Semaphore(concurrency);
 
     // Create a wrapper to distinguish between successful null results and failures
-    final futures = items.map((item) async {
+    final Iterable<Future<_ProcessingResult<T>>> futures = items.map((String item) async {
       await semaphore.acquire();
 
       try {
-        final result = await processor(item);
+        final T result = await processor(item);
         return _ProcessingResult<T>.success(result);
       } catch (e) {
         if (!continueOnError) {
@@ -50,13 +50,13 @@ class BatchProcessor {
     });
 
     try {
-      final completedResults = await Future.wait(
+      final List<_ProcessingResult<T>> completedResults = await Future.wait(
         futures,
         eagerError: !continueOnError,
       );
 
       // Collect only successful results
-      for (final result in completedResults) {
+      for (final _ProcessingResult<T> result in completedResults) {
         if (result.isSuccess) {
           results.add(result.value);
         }
@@ -85,13 +85,13 @@ class BatchProcessor {
     int concurrency = 3,
     bool continueOnError = true,
   }) async {
-    final allResults = <T>[];
+    final List<T> allResults = <T>[];
 
     for (int i = 0; i < items.length; i += chunkSize) {
-      final end = (i + chunkSize < items.length) ? i + chunkSize : items.length;
-      final chunk = items.sublist(i, end);
+      final int end = (i + chunkSize < items.length) ? i + chunkSize : items.length;
+      final List<String> chunk = items.sublist(i, end);
 
-      final chunkResults = await processBatch<T>(
+      final List<T> chunkResults = await processBatch<T>(
         items: chunk,
         processor: processor,
         concurrency: concurrency,
@@ -128,7 +128,7 @@ class BatchProcessor {
       for (int attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           return await processor(item);
-        } catch (e) {
+        } on FormatException catch (e) {
           lastError = e;
           if (attempt < maxRetries) {
             await Future<void>.delayed(retryDelay);
@@ -136,6 +136,7 @@ class BatchProcessor {
         }
       }
 
+      // ignore: only_throw_errors
       throw lastError!;
     }
 
@@ -150,12 +151,12 @@ class BatchProcessor {
 
 /// A semaphore implementation for controlling concurrency.
 class Semaphore {
-  final int _maxCount;
-  int _currentCount;
-  final Queue<Completer<void>> _waitQueue = Queue<Completer<void>>();
 
   /// Creates a semaphore with the specified maximum count.
   Semaphore(this._maxCount) : _currentCount = _maxCount;
+  final int _maxCount;
+  int _currentCount;
+  final Queue<Completer<void>> _waitQueue = Queue<Completer<void>>();
 
   /// Acquires a permit from the semaphore.
   ///
@@ -166,7 +167,7 @@ class Semaphore {
       return;
     }
 
-    final completer = Completer<void>();
+    final Completer<void> completer = Completer<void>();
     _waitQueue.add(completer);
     return completer.future;
   }
@@ -176,8 +177,8 @@ class Semaphore {
   /// This allows waiting operations to proceed.
   void release() {
     if (_waitQueue.isNotEmpty) {
-      final completer = _waitQueue.removeFirst();
-      completer.complete();
+      _waitQueue.removeFirst()
+      .complete();
     } else {
       _currentCount++;
       // Ensure we don't exceed the maximum count
@@ -196,17 +197,17 @@ class Semaphore {
 
 /// Internal helper class to distinguish between successful results and failures.
 class _ProcessingResult<T> {
-  final T? _value;
-  final Object? _error;
-  final bool isSuccess;
-
-  _ProcessingResult.success(this._value)
-      : _error = null,
-        isSuccess = true;
 
   _ProcessingResult.failure(this._error)
       : _value = null,
         isSuccess = false;
+
+  _ProcessingResult.success(this._value)
+      : _error = null,
+        isSuccess = true;
+  final T? _value;
+  final Object? _error;
+  final bool isSuccess;
 
   T get value {
     if (!isSuccess) {

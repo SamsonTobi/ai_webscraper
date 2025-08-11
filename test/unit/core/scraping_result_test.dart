@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:test/test.dart';
 import 'package:ai_webscraper/ai_webscraper.dart';
 
@@ -406,7 +404,7 @@ void main() {
     });
 
     group('toString Tests', () {
-      test('should return JSON string for successful result', () {
+      test('should format successful result toString correctly', () {
         final result = ScrapingResult.success(
           data: testData,
           scrapingTime: testDuration,
@@ -416,18 +414,14 @@ void main() {
 
         final stringResult = result.toString();
 
-        // Should be valid JSON
-        expect(() => jsonDecode(stringResult), returnsNormally);
-
-        final json = jsonDecode(stringResult) as Map<String, dynamic>;
-        expect(json['success'], isTrue);
-        expect(json['data'], equals(testData));
-        expect(json['metadata']['url'], equals(testUrl));
-        expect(json['metadata']['aiProvider'], equals('OpenAI'));
-        expect(json['metadata']['fieldCount'], equals(2));
+        expect(stringResult, contains('success: true'));
+        expect(stringResult, contains(testUrl));
+        expect(stringResult, contains('OpenAI'));
+        expect(stringResult, contains('fields: 2'));
+        expect(stringResult, contains('${testDuration.inMilliseconds}ms'));
       });
 
-      test('should return JSON string for failed result', () {
+      test('should format failed result toString correctly', () {
         final result = ScrapingResult.failure(
           error: testError,
           scrapingTime: testDuration,
@@ -437,14 +431,11 @@ void main() {
 
         final stringResult = result.toString();
 
-        // Should be valid JSON
-        expect(() => jsonDecode(stringResult), returnsNormally);
-
-        final json = jsonDecode(stringResult) as Map<String, dynamic>;
-        expect(json['success'], isFalse);
-        expect(json['error'], equals(testError));
-        expect(json['metadata']['url'], equals(testUrl));
-        expect(json['metadata']['aiProvider'], equals('OpenAI'));
+        expect(stringResult, contains('success: false'));
+        expect(stringResult, contains(testUrl));
+        expect(stringResult, contains('OpenAI'));
+        expect(stringResult, contains(testError));
+        expect(stringResult, contains('${testDuration.inMilliseconds}ms'));
       });
     });
 

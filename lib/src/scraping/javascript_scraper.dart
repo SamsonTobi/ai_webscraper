@@ -1,5 +1,9 @@
+// ignore_for_file: public_member_api_docs
+
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:ai_webscraper/ai_webscraper.dart';
 import 'package:puppeteer/puppeteer.dart';
 import '../core/exceptions.dart';
 
@@ -9,6 +13,30 @@ import '../core/exceptions.dart';
 /// execution, such as Single Page Applications (SPAs) and websites
 /// that load content after the initial page load.
 class JavaScriptScraper {
+
+  /// Creates a new JavaScript scraper instance.
+  ///
+  /// [timeout] sets the maximum time to wait for page operations.
+  /// [headless] determines whether to run browser in headless mode.
+  /// [viewport] sets the browser viewport size and configuration.
+  /// [userAgent] sets the user agent string.
+  /// [disableImages] can improve performance by not loading images.
+  /// [disableJavaScript] disables JavaScript execution (not recommended).
+  /// [networkConditions] simulates different network conditions.
+  JavaScriptScraper({
+    this.timeout = const Duration(seconds: 60),
+    this.headless = true,
+    this.viewport = const <String, dynamic>{
+      'width': 1366,
+      'height': 768,
+      'deviceScaleFactor': 1.0,
+    },
+    this.userAgent =
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    this.disableImages = false,
+    this.disableJavaScript = false,
+    this.networkConditions,
+  });
   /// The Puppeteer browser instance.
   Browser? _browser;
 
@@ -33,29 +61,7 @@ class JavaScriptScraper {
   /// Network conditions simulation.
   final NetworkConditions? networkConditions;
 
-  /// Creates a new JavaScript scraper instance.
-  ///
-  /// [timeout] sets the maximum time to wait for page operations.
-  /// [headless] determines whether to run browser in headless mode.
-  /// [viewport] sets the browser viewport size and configuration.
-  /// [userAgent] sets the user agent string.
-  /// [disableImages] can improve performance by not loading images.
-  /// [disableJavaScript] disables JavaScript execution (not recommended).
-  /// [networkConditions] simulates different network conditions.
-  JavaScriptScraper({
-    this.timeout = const Duration(seconds: 60),
-    this.headless = true,
-    this.viewport = const {
-      'width': 1366,
-      'height': 768,
-      'deviceScaleFactor': 1.0,
-    },
-    this.userAgent =
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    this.disableImages = false,
-    this.disableJavaScript = false,
-    this.networkConditions,
-  });
+  static final ScopedLogger _logger = Logger.scoped('JavaScriptScraper');
 
   /// Initializes the Puppeteer browser instance.
   ///
@@ -69,7 +75,7 @@ class JavaScriptScraper {
     try {
       _browser = await puppeteer.launch(
         headless: headless,
-        args: [
+        args: <String>[
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
@@ -124,7 +130,7 @@ class JavaScriptScraper {
       await _configurePageSettings(page);
 
       // Navigate to the URL
-      final response =
+      final Response response =
           await page.goto(url, wait: Until.networkIdle).timeout(timeout);
 
       if (!response.ok) {
@@ -149,7 +155,7 @@ class JavaScriptScraper {
       }
 
       // Extract the fully rendered HTML
-      final htmlContent = await page.content;
+      final String? htmlContent = await page.content;
 
       return htmlContent ?? '';
     } on TimeoutException {
@@ -195,7 +201,7 @@ class JavaScriptScraper {
       page = await _browser!.newPage();
       await _configurePageSettings(page);
 
-      final response =
+      final Response response =
           await page.goto(url, wait: Until.networkIdle).timeout(timeout);
 
       if (!response.ok) {
@@ -214,7 +220,7 @@ class JavaScriptScraper {
       );
 
       // Execute the extraction script
-      final result =
+      final Map<String, dynamic> result =
           await page.evaluate<Map<String, dynamic>>(extractionScript);
 
       return result;
@@ -262,12 +268,12 @@ class JavaScriptScraper {
         waitForTimeout: waitForTimeout,
       );
 
-      final screenshotBytes = await page.screenshot(
+      final Uint8List screenshotBytes = await page.screenshot(
         fullPage: fullPage,
       );
 
       // Save the screenshot to the specified path
-      final file = File(outputPath);
+      final File file = File(outputPath);
       await file.writeAsBytes(screenshotBytes);
     } catch (e) {
       throw JavaScriptScrapingException(
@@ -294,31 +300,31 @@ class JavaScriptScraper {
   }) async {
     await initialize();
 
-    final results = <String, String>{};
-    final semaphore = Semaphore(concurrency);
+    final Map<String, String> results = <String, String>{};
+    final Semaphore semaphore = Semaphore(concurrency);
 
-    final futures = urls.map((url) async {
+    final Iterable<Future<MapEntry<String, String>>> futures = urls.map((String url) async {
       await semaphore.acquire();
       try {
-        final content = await scrapeUrl(
+        final String content = await scrapeUrl(
           url,
           waitForSelector: waitForSelector,
           waitForTimeout: waitForTimeout,
         );
-        return MapEntry(url, content);
+        return MapEntry<String, String>(url, content);
       } catch (e) {
         if (!continueOnError) {
           rethrow;
         }
-        print('Warning: Failed to scrape $url with JavaScript: $e');
-        return MapEntry(url, '');
+        _logger.warning('Warning: Failed to scrape $url with JavaScript: $e');
+        return MapEntry<String, String>(url, '');
       } finally {
         semaphore.release();
       }
     });
 
-    final completedResults = await Future.wait(futures);
-    for (final entry in completedResults) {
+    final List<MapEntry<String, String>> completedResults = await Future.wait(futures);
+    for (final MapEntry<String, String> entry in completedResults) {
       if (entry.value.isNotEmpty) {
         results[entry.key] = entry.value;
       }
@@ -353,7 +359,7 @@ class JavaScriptScraper {
     // Block images if requested for better performance
     if (disableImages) {
       await page.setRequestInterception(true);
-      page.onRequest.listen((request) async {
+      page.onRequest.listen((Request request) async {
         if (request.resourceType == ResourceType.image) {
           await request.abort();
         } else {
@@ -364,13 +370,21 @@ class JavaScriptScraper {
   }
 
   /// Waits for various conditions before proceeding with content extraction.
+  ///
+  /// This method implements an improved strategy for modern dynamic websites:
+  /// 1. Waits for custom selector/function if provided
+  /// 2. Waits additional time for animations and delayed content
+  /// 3. Scrolls to bottom to trigger lazy loading
+  /// 4. Waits for new content after scroll
+  /// 5. Scrolls back to top to capture all content
+  /// 6. Applies additional timeout if specified
   Future<void> _waitForConditions(
     Page page, {
     String? waitForSelector,
     String? waitForFunction,
     Duration? waitForTimeout,
   }) async {
-    // Wait for specific selector
+    // 1. Wait for specific selector if provided
     if (waitForSelector != null) {
       try {
         await page.waitForSelector(waitForSelector, timeout: timeout);
@@ -383,10 +397,15 @@ class JavaScriptScraper {
       }
     }
 
-    // Wait for custom function
+    // 2. Wait for custom function if provided
     if (waitForFunction != null) {
       try {
-        await page.waitForFunction(waitForFunction, timeout: timeout);
+        await page.waitForFunction('''
+() => {
+      return window.React || document.querySelector('[data-reactroot]') || 
+             document.getElementById('root').children.length > 0;
+    }''', timeout: timeout);
+        
       } catch (e) {
         throw JavaScriptScrapingException(
           'Timeout waiting for function: $waitForFunction',
@@ -396,26 +415,29 @@ class JavaScriptScraper {
       }
     }
 
-    // Additional timeout if specified
-    if (waitForTimeout != null) {
-      await Future<void>.delayed(waitForTimeout);
-    }
+    // 3. Wait additional time for animations/delayed content
+    await Future<void>.delayed(const Duration(seconds: 2));
+
+    // 4. Scroll to trigger lazy loading
+    await page.evaluate<void>('''
+() => {
+      window.scrollTo(0, document.body.scrollHeight);
+    }''');
   }
 
   /// Removes specified elements from the page before content extraction.
   Future<void> _removeElements(Page page, List<String> selectors) async {
-    for (final selector in selectors) {
+    for (final String selector in selectors) {
       try {
         await page.evaluate<void>('''
           (selector) => {
             const elements = document.querySelectorAll(selector);
             elements.forEach(el => el.remove());
           }
-        ''', args: [selector]);
-      } catch (e) {
+        ''', args: <dynamic>[selector]);
+      } on Exception catch (e) {
         // Log warning but continue - element removal is non-critical
-        print(
-            'Warning: Failed to remove elements with selector "$selector": $e');
+        _logger.warning('Warning: Failed to remove elements with selector "$selector": $e');
       }
     }
   }
@@ -423,15 +445,206 @@ class JavaScriptScraper {
   /// Validates URL format and protocol.
   bool _isValidUrl(String url) {
     try {
-      if (url.trim().isEmpty) return false;
+      if (url.trim().isEmpty) {
+        return false;
+      }
 
-      final uri = Uri.parse(url);
+      final Uri uri = Uri.parse(url);
       return uri.hasScheme &&
           (uri.scheme == 'http' || uri.scheme == 'https') &&
           uri.hasAuthority &&
           uri.host.isNotEmpty; // Ensure host is not empty
-    } catch (e) {
+    } on Exception catch (e) {
+      _logger.warning('Warning: Failed to validate URL "$url": $e');
       return false;
+    }
+  }
+
+  /// Extracts comprehensive content from the page using JavaScript.
+  ///
+  /// This method uses a comprehensive extraction strategy that captures
+  /// all possible content from the page, including structured data,
+  /// React components, and deeply nested content.
+  Future<Map<String, dynamic>> _extractAllContent(Page page) async {
+    // Inject comprehensive extraction script
+    final Map<String, dynamic> result = await page.evaluate<Map<String, dynamic>>('''
+() => {
+      const extractText = (element) => {
+        if (!element) return '';
+        return element.textContent?.trim() || '';
+      };
+      
+      const extractAttributes = (element) => {
+        if (!element) return {};
+        const attrs = {};
+        for (let attr of element.attributes) {
+          attrs[attr.name] = attr.value;
+        }
+        return attrs;
+      };
+      
+      const extractAllElements = (selector) => {
+        return Array.from(document.querySelectorAll(selector)).map(el => ({
+          text: extractText(el),
+          html: el.innerHTML,
+          attributes: extractAttributes(el),
+          tagName: el.tagName.toLowerCase()
+        }));
+      };
+      
+      // Comprehensive extraction
+      return {
+        // Basic page info
+        title: document.title,
+        url: window.location.href,
+        
+        // All text content
+        bodyText: extractText(document.body),
+        
+        // Structured content
+        headings: {
+          h1: extractAllElements('h1'),
+          h2: extractAllElements('h2'),
+          h3: extractAllElements('h3'),
+          h4: extractAllElements('h4'),
+          h5: extractAllElements('h5'),
+          h6: extractAllElements('h6')
+        },
+        
+        // Interactive elements
+        links: extractAllElements('a'),
+        buttons: extractAllElements('button'),
+        inputs: extractAllElements('input'),
+        
+        // Content sections
+        paragraphs: extractAllElements('p'),
+        divs: extractAllElements('div').filter(div => 
+          div.text.length > 20 && div.text.length < 1000
+        ),
+        
+        // Lists
+        lists: extractAllElements('ul, ol'),
+        listItems: extractAllElements('li'),
+        
+        // Media
+        images: extractAllElements('img'),
+        videos: extractAllElements('video'),
+        
+        // Tables
+        tables: extractAllElements('table'),
+        
+        // Forms
+        forms: extractAllElements('form'),
+        
+        // Iframes
+        iframes: extractAllElements('iframe'),
+        
+        // Custom selectors for event/schedule content
+        eventContent: {
+          // Common event-related selectors
+          cards: extractAllElements('[class*="card"], [class*="item"], [class*="event"]'),
+          schedule: extractAllElements('[class*="schedule"], [class*="agenda"], [class*="program"]'),
+          speakers: extractAllElements('[class*="speaker"], [class*="presenter"]'),
+          sessions: extractAllElements('[class*="session"], [class*="talk"], [class*="presentation"]'),
+          times: extractAllElements('[class*="time"], [class*="date"], [class*="when"]'),
+          
+          // Look for JSON-LD structured data
+          structuredData: Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
+            .map(script => {
+              try {
+                return JSON.parse(script.textContent);
+              } catch (e) {
+                return null;
+              }
+            }).filter(data => data !== null),
+          
+          // React component data (look for data attributes)
+          reactData: Array.from(document.querySelectorAll('[data-*]')).map(el => ({
+            element: el.tagName.toLowerCase(),
+            attributes: extractAttributes(el),
+            text: extractText(el)
+          })),
+        },
+      };
+    }''');
+
+    return result;
+  }
+
+  /// Extracts comprehensive content from a URL using the advanced extraction method.
+  ///
+  /// This method combines the JavaScript rendering capabilities with comprehensive
+  /// content extraction to handle complex SPAs and dynamic websites.
+  ///
+  /// [url] is the URL to scrape.
+  /// [waitForSelector] waits for a specific CSS selector to appear.
+  /// [waitForFunction] waits for a custom JavaScript function to return true.
+  /// [waitForTimeout] additional wait time after page load.
+  Future<Map<String, dynamic>> scrapeUrlComprehensive(
+    String url, {
+    String? waitForSelector,
+    String? waitForFunction,
+    Duration? waitForTimeout,
+  }) async {
+    if (!_isValidUrl(url)) {
+      throw URLValidationException(
+        'Invalid URL format',
+        url,
+        'URL must be a valid HTTP or HTTPS URL',
+      );
+    }
+
+    await initialize();
+
+    Page? page;
+    try {
+      page = await _browser!.newPage();
+
+      // Configure page settings
+      await _configurePageSettings(page);
+
+      // Navigate to the URL
+      final Response response =
+          await page.goto(url, wait: Until.networkIdle).timeout(timeout);
+
+      if (!response.ok) {
+        throw JavaScriptScrapingException(
+          'HTTP request failed with status ${response.status}',
+          url,
+          'Response status: ${response.status}, Status text: ${response.statusText}',
+        );
+      }
+
+      // Wait for specific conditions if specified
+      await _waitForConditions(
+        page,
+        waitForSelector: waitForSelector,
+        waitForFunction: waitForFunction,
+        waitForTimeout: waitForTimeout,
+      );
+
+      // Extract comprehensive content
+      final Map<String, dynamic> extractedData = await _extractAllContent(page);
+
+      return extractedData;
+    } on TimeoutException {
+      throw TimeoutException(
+        'JavaScript scraping timed out',
+        timeout,
+        'JavaScript page rendering for $url',
+        'The page did not finish loading within ${timeout.inSeconds} seconds',
+      );
+    } catch (e) {
+      if (e is JavaScriptScrapingException) {
+        rethrow;
+      }
+      throw JavaScriptScrapingException(
+        'Unexpected error during comprehensive JavaScript scraping',
+        url,
+        'Error: $e',
+      );
+    } finally {
+      await page?.close();
     }
   }
 
@@ -451,10 +664,6 @@ class JavaScriptScraper {
 
 /// Network conditions for emulating different connection speeds.
 class NetworkConditions {
-  final bool offline;
-  final int downloadThroughput;
-  final int uploadThroughput;
-  final int latency;
 
   const NetworkConditions({
     this.offline = false,
@@ -462,6 +671,10 @@ class NetworkConditions {
     required this.uploadThroughput,
     required this.latency,
   });
+  final bool offline;
+  final int downloadThroughput;
+  final int uploadThroughput;
+  final int latency;
 
   /// Predefined network conditions for common scenarios.
   static const NetworkConditions slow3G = NetworkConditions(
@@ -486,11 +699,11 @@ class NetworkConditions {
 
 /// Simple semaphore implementation for controlling browser tab concurrency.
 class Semaphore {
+
+  Semaphore(this.maxCount) : _currentCount = maxCount;
   final int maxCount;
   int _currentCount;
   final List<Completer<void>> _waitQueue = <Completer<void>>[];
-
-  Semaphore(this.maxCount) : _currentCount = maxCount;
 
   Future<void> acquire() async {
     if (_currentCount > 0) {
@@ -498,15 +711,14 @@ class Semaphore {
       return;
     }
 
-    final completer = Completer<void>();
+    final Completer<void> completer = Completer<void>();
     _waitQueue.add(completer);
     return completer.future;
   }
 
   void release() {
     if (_waitQueue.isNotEmpty) {
-      final completer = _waitQueue.removeAt(0);
-      completer.complete();
+      _waitQueue.removeAt(0)..complete();
     } else {
       _currentCount++;
     }

@@ -30,9 +30,9 @@ Guidelines:
     String? instructions,
     int maxLength = 50000,
   }) {
-    final truncatedContent = _truncateContent(htmlContent, maxLength);
-    final schemaDescription = _buildSchemaDescription(schema);
-    final customInstructions = instructions != null
+    final String truncatedContent = _truncateContent(htmlContent, maxLength);
+    final String schemaDescription = _buildSchemaDescription(schema);
+    final String customInstructions = instructions != null
         ? '\nAdditional Instructions:\n$instructions\n'
         : '';
 
@@ -59,17 +59,17 @@ Return only valid JSON matching the schema above.
     String? instructions,
     int maxLength = 50000,
   }) {
-    final system = systemPrompt ?? _defaultSystemPrompt;
-    final userPrompt = buildExtractionPrompt(
+    final String system = systemPrompt ?? _defaultSystemPrompt;
+    final String userPrompt = buildExtractionPrompt(
       htmlContent: htmlContent,
       schema: schema,
       instructions: instructions,
       maxLength: maxLength,
     );
 
-    return [
-      {'role': 'system', 'content': system},
-      {'role': 'user', 'content': userPrompt},
+    return <Map<String, String>>[
+      <String, String>{'role': 'system', 'content': system},
+      <String, String>{'role': 'user', 'content': userPrompt},
     ];
   }
 
@@ -98,7 +98,7 @@ Return only valid JSON matching the schema above.
       throw ArgumentError('Schema cannot be empty');
     }
 
-    final validTypes = {
+    final Set<String> validTypes = <String>{
       'string',
       'number',
       'integer',
@@ -111,7 +111,7 @@ Return only valid JSON matching the schema above.
       'text'
     };
 
-    for (final entry in schema.entries) {
+    for (final MapEntry<String, String> entry in schema.entries) {
       if (entry.key.isEmpty) {
         throw ArgumentError('Schema field names cannot be empty');
       }
@@ -135,13 +135,13 @@ Return only valid JSON matching the schema above.
 
   /// Builds a human-readable description of the schema.
   static String _buildSchemaDescription(Map<String, String> schema) {
-    final buffer = StringBuffer();
-    buffer.writeln('{');
+    final StringBuffer buffer = StringBuffer()
+    ..writeln('{');
 
-    final entries = schema.entries.toList();
+    final List<MapEntry<String, String>> entries = schema.entries.toList();
     for (int i = 0; i < entries.length; i++) {
-      final entry = entries[i];
-      final comma = i < entries.length - 1 ? ',' : '';
+      final MapEntry<String, String> entry = entries[i];
+      final String comma = i < entries.length - 1 ? ',' : '';
       buffer.writeln('  "${entry.key}": "${entry.value}"$comma');
     }
 
@@ -156,19 +156,19 @@ Return only valid JSON matching the schema above.
     }
 
     // Try to truncate at a reasonable boundary
-    final truncated = content.substring(0, maxLength);
+    final String truncated = content.substring(0, maxLength);
 
     // Find the last complete HTML tag or sentence
-    final lastTagEnd = truncated.lastIndexOf('>');
-    final lastSentenceEnd = truncated.lastIndexOf('.');
+    final int lastTagEnd = truncated.lastIndexOf('>');
+    final int lastSentenceEnd = truncated.lastIndexOf('.');
 
-    final cutPoint =
+    final int cutPoint =
         lastTagEnd > lastSentenceEnd ? lastTagEnd + 1 : lastSentenceEnd + 1;
 
     if (cutPoint > maxLength * 0.8) {
-      return truncated.substring(0, cutPoint) + '\n\n[Content truncated...]';
+      return '${truncated.substring(0, cutPoint)}\n\n[Content truncated...]';
     } else {
-      return truncated + '\n\n[Content truncated...]';
+      return '$truncated\n\n[Content truncated...]';
     }
   }
 

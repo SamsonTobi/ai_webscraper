@@ -8,3 +8,9 @@
 # https://dart.dev/guides/libraries/private-files#pubspeclock.
 pubspec.lock
 .local-chrome
+
+ai_webscraper_basic_spec.md
+ai_webscraper_package_spec.md
+
+*_test.dart
+test/
